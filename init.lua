@@ -661,6 +661,7 @@ require('lazy').setup({
       local servers = {
         clangd = {
           cmd = { 'clangd' },
+          args = { '--background-index=false' }
         },
         -- gopls = {},
         -- pyright = {},
