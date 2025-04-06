@@ -352,6 +352,8 @@ require('lazy').setup({
         width = 40,
         col = -1,
       },
+
+      preset = "modern",
     },
   },
 
