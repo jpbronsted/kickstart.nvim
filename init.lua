@@ -347,6 +347,11 @@ require('lazy').setup({
 
       -- Notify on mapping issues for now to help with debugging
       notify = true,
+
+      win = {
+        width = 40,
+        col = -1,
+      },
     },
   },
 
