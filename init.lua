@@ -164,6 +164,19 @@ vim.opt.confirm = false
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
+-- Maps a 'jump' and an 'open' keybind for a navigational action.
+local mapJumpAndOpen = function(mode, keys, action, opts)
+  local desc = opts['desc']
+  opts = opts or {}
+  opts['desc'] = '[J]ump ' .. desc
+  vim.keymap.set(mode, '<leader>j' .. keys, action, opts)
+  opts['desc'] = '[O]pen ' .. desc
+  vim.keymap.set(mode, '<leader>o' .. keys, function()
+    vim.cmd('vsplit')
+    action()
+  end, opts)
+end
+
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
@@ -334,7 +347,8 @@ require('lazy').setup({
       -- Document existing key chains
       spec = {
         { '<leader>a', group = '[A]ction' },
-        { '<leader>g', group = '[G]oto' },
+        { '<leader>j', group = '[J]ump' },
+        { '<leader>o', group = '[O]pen' },
         { '<leader>s', group = '[S]earch' },
         { '<leader>v', group = '[V]iew' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
@@ -519,30 +533,34 @@ require('lazy').setup({
             mode = mode or 'n'
             vim.keymap.set(mode, keys, func, { buffer = event.buf, desc = desc })
           end
+          local mapNavigational = function(keys, func, desc, mode)
+            mode = mode or 'n'
+            mapJumpAndOpen(mode, keys, func, { buffer = event.buf, desc = desc })
+          end
 
           -- Jump to the definition of the word under your cursor.
           --  This is where a variable was first declared, or where a function is defined, etc.
           --  To jump back, press <C-t>.
-          map('<leader>gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
+          mapNavigational('d', require('telescope.builtin').lsp_definitions, '[D]efinition')
 
           -- Find references for the word under your cursor.
-          map('<leader>gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+          mapNavigational('r', require('telescope.builtin').lsp_references, '[R]eferences')
 
           -- Jump to the implementation of the word under your cursor.
           --  Useful when your language has ways of declaring types without an actual implementation.
-          map('<leader>gi', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
+          mapNavigational('i', require('telescope.builtin').lsp_implementations, '[I]mplementation')
 
           -- Jump to the type of the word under your cursor.
           --  Useful when you're not sure what type a variable is and you want to see
           --  the definition of its *type*, not where it was *defined*.
-          map('<leader>gt', require('telescope.builtin').lsp_type_definitions, '[G]oto [T]ype')
+          mapNavigational('t', require('telescope.builtin').lsp_type_definitions, '[T]ype')
 
           -- Fuzzy find all the symbols in your current document.
           --  Symbols are things like variables, functions, types, etc.
-          map('<leader>gs', require('telescope.builtin').lsp_document_symbols, '[G]oto [S]ymbols')
+          mapNavigational('s', require('telescope.builtin').lsp_document_symbols, '[S]ymbols')
 
           -- Goto declaration
-          map('<leader>gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+          mapNavigational('D', vim.lsp.buf.declaration, '[D]eclaration')
 
           -- Rename the variable under your cursor.
           --  Most Language Servers support renaming across files, etc.
@@ -635,7 +653,7 @@ require('lazy').setup({
           end,
         },
       }
-      vim.keymap.set('n', '<leader>gw', vim.diagnostic.setloclist, { desc = '[G]oto [W]arnings' })
+      mapJumpAndOpen('n', 'w', vim.diagnostic.setloclist, { desc = '[W]arnings' })
       vim.keymap.set('n', '<leader>vw', function()
         vim.diagnostic.enable(not vim.diagnostic.is_enabled())
       end, { desc = '[V]iew [W]arnings'})
