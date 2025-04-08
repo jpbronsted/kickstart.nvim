@@ -541,9 +541,6 @@ require('lazy').setup({
           --  Symbols are things like variables, functions, types, etc.
           map('<leader>gs', require('telescope.builtin').lsp_document_symbols, '[G]oto [S]ymbols')
 
-          -- Find diagnostics
-          map('<leader>gw', vim.diagnostic.setloclist, '[G]oto [W]arnings')
-
           -- Goto declaration
           map('<leader>gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
 
@@ -607,9 +604,6 @@ require('lazy').setup({
             end, '[V]iew [H]ints')
           end
 
-          map('<leader>vw', function()
-            vim.diagnostic.enable(not vim.diagnostic.is_enabled())
-          end, '[V]iew [W]arnings')
         end,
       })
 
@@ -641,6 +635,10 @@ require('lazy').setup({
           end,
         },
       }
+      vim.keymap.set('n', '<leader>gw', vim.diagnostic.setloclist, { desc = '[G]oto [W]arnings' })
+      vim.keymap.set('n', '<leader>vw', function()
+        vim.diagnostic.enable(not vim.diagnostic.is_enabled())
+      end, { desc = '[V]iew [W]arnings'})
 
       -- Enable the following language servers
       --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
