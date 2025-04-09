@@ -177,6 +177,59 @@ local mapJumpAndOpen = function(mode, keys, action, opts)
   end, opts)
 end
 
+-- Keybind for cycling through "sibling" files. These are files that pertain to the same topic, and
+-- describe different aspects of that topic. E.g., cycles between name_of_module.cpp,
+-- name_of_module.h, name_of_module_test.cpp, etc.
+SUFFIXES = (function()
+  local extensions = { '.h', '.hpp', '.c', '.cc', '.cpp', '.idl' }
+  local categories = {
+    '', '_impl', '_helpers', '_util', '_factory', '_test', '_integration_test', '_fixture',
+    '_integration_fixture', '_bm'
+  }
+  local suffixes = {}
+  for _, extension in ipairs(extensions) do
+    for _, category in ipairs(categories) do
+      table.insert(suffixes, category .. extension)
+    end
+  end
+  return suffixes
+end)()
+mapJumpAndOpen('n', 's', function()
+  local current_file = vim.api.nvim_eval('expand("%:p")')
+
+  local topic_name, current_index = (function(path)
+    local shortest_match = path
+    local matching_index = -1
+    for i, suffix in ipairs(SUFFIXES) do
+      local remaining, matched = string.gsub(path, suffix .. '$', '')
+      if matched and #remaining < #shortest_match then
+        shortest_match = remaining
+        matching_index = i
+      end
+    end
+    return shortest_match, matching_index
+  end)(current_file)
+  if topic_name == current_file then return end
+
+  local next_file = (function(path_prefix, starting_index)
+    local exists = function(path)
+      return vim.fn.filereadable(path) == 1
+    end
+    local index = starting_index + 1
+    if index > #SUFFIXES then index = 1 end
+    while index ~= starting_index do
+      local next_file = path_prefix .. SUFFIXES[index]
+      if exists(next_file) then return next_file end
+      index = index + 1
+      if index > #SUFFIXES then index = 1 end
+    end
+    return path_prefix .. SUFFIXES[index]
+  end)(topic_name, current_index)
+  if next_file == current_file then return end
+
+  vim.cmd('e ' .. next_file)
+end, { desc = '[S]ibling' })
+
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
@@ -557,7 +610,7 @@ require('lazy').setup({
 
           -- Fuzzy find all the symbols in your current document.
           --  Symbols are things like variables, functions, types, etc.
-          mapNavigational('s', require('telescope.builtin').lsp_document_symbols, '[S]ymbols')
+          mapNavigational('S', require('telescope.builtin').lsp_document_symbols, '[S]ymbols')
 
           -- Goto declaration
           mapNavigational('D', vim.lsp.buf.declaration, '[D]eclaration')
