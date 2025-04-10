@@ -164,6 +164,10 @@ vim.opt.confirm = false
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
+vim.keymap.set('n', '<leader>vl', function()
+  vim.opt.wrap = not vim.opt.wrap._value
+end, { desc = "[V]iew [L]ine Wrap" })
+
 -- Maps a 'jump' and an 'open' keybind for a navigational action.
 local mapJumpAndOpen = function(mode, keys, action, opts)
   local desc = opts['desc']
