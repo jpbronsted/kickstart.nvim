@@ -194,41 +194,43 @@ SUFFIXES = (function()
   end
   return suffixes
 end)()
-mapJumpAndOpen('n', 's', function()
-  local current_file = vim.api.nvim_eval('expand("%:p")')
+local siblings = function(opts)
+  opts = opts or {}
+  require("telescope.pickers").new(opts, {
+    prompt_title = "siblings",
+    finder = require("telescope.finders").new_table {
+      results = (function()
+        local current_file = vim.api.nvim_eval('expand("%:p")')
+        local topic_name = (function(path)
+          local shortest_match = path
+          for _, suffix in ipairs(SUFFIXES) do
+            local remaining, matched = string.gsub(path, suffix .. '$', '')
+            if matched and #remaining < #shortest_match then
+              shortest_match = remaining
+            end
+          end
+          return shortest_match
+        end)(current_file)
+        if topic_name == current_file then return { topic_name } end
 
-  local topic_name, current_index = (function(path)
-    local shortest_match = path
-    local matching_index = -1
-    for i, suffix in ipairs(SUFFIXES) do
-      local remaining, matched = string.gsub(path, suffix .. '$', '')
-      if matched and #remaining < #shortest_match then
-        shortest_match = remaining
-        matching_index = i
-      end
-    end
-    return shortest_match, matching_index
-  end)(current_file)
-  if topic_name == current_file then return end
-
-  local next_file = (function(path_prefix, starting_index)
-    local exists = function(path)
-      return vim.fn.filereadable(path) == 1
-    end
-    local index = starting_index + 1
-    if index > #SUFFIXES then index = 1 end
-    while index ~= starting_index do
-      local next_file = path_prefix .. SUFFIXES[index]
-      if exists(next_file) then return next_file end
-      index = index + 1
-      if index > #SUFFIXES then index = 1 end
-    end
-    return path_prefix .. SUFFIXES[index]
-  end)(topic_name, current_index)
-  if next_file == current_file then return end
-
-  vim.cmd('e ' .. next_file)
-end, { desc = '[S]ibling' })
+        return (function(path_prefix)
+          local exists = function(path)
+            return vim.fn.filereadable(path) == 1
+          end
+          local siblings = {}
+          for _, suffix in ipairs(SUFFIXES) do
+            local sibling = path_prefix .. suffix
+            if exists(sibling) then table.insert(siblings, sibling) end
+          end
+          return siblings
+        end)(topic_name)
+      end)()
+    },
+    sorter = require("telescope.config").values.generic_sorter(opts),
+    previewer = require("telescope.config").values.file_previewer(opts),
+  }):find()
+end
+mapJumpAndOpen('n', 's', siblings, { desc = "[S]iblings" })
 
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
