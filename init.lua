@@ -406,6 +406,7 @@ require('lazy').setup({
       -- Document existing key chains
       spec = {
         { '<leader>a', group = '[A]ction' },
+        { '<leader>g', group = '[G]it' },
         { '<leader>j', group = '[J]ump' },
         { '<leader>o', group = '[O]pen' },
         { '<leader>s', group = '[S]earch' },
@@ -520,6 +521,11 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sn', function()
         builtin.find_files { cwd = vim.fn.stdpath 'config' }
       end, { desc = '[S]earch [N]eovim files' })
+
+      -- Git
+      vim.keymap.set('n', '<leader>gb', builtin.git_bcommits, { desc = '[G]it [B]lame Line' })
+      vim.keymap.set('n', '<leader>gl', builtin.git_commits, { desc = '[G]it [L]og' })
+      vim.keymap.set('n', '<leader>gs', builtin.git_status, { desc = '[G]it [S]tatus' })
     end,
   },
 
